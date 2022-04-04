@@ -9,3 +9,13 @@ userform.loginFormCallback = data =>{
         };
      });
 };
+
+userform.registerFormCallback = data =>{
+    ApiConnector.register(data, c => {
+        //console.log(c.success);
+        if (c.success) {location.reload();
+       } else {
+           alert(c.error);
+       };
+    });
+};

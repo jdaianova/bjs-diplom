@@ -10,18 +10,18 @@ ApiConnector.current(c => {
 const board = new RatesBoard;
 
 function getKursValut(b) {
-    console.log('start func');
     ApiConnector.getStocks(c => {
         if (c.success) {
+            //alert('обновление курса');
             b.clearTable();
-            console.log('sdfsdf');
             b.fillTable(c.data);
-        }else{console.log('else')};
+        };
     });
 };
 setInterval(getKursValut(board), 60000);
 
 const money = new MoneyManager;
+
 money.addMoneyCallback = data => ApiConnector.addMoney(data, c => {
     if (c.success) {
         ProfileWidget.showProfile(c.data);
@@ -31,8 +31,33 @@ money.addMoneyCallback = data => ApiConnector.addMoney(data, c => {
     };
 });
 
+money.conversionMoneyCallback = data => ApiConnector.convertMoney(data, c => {
+    if (c.success) {
+        ProfileWidget.showProfile(c.data);
+        alert('Конвертация выполнена успешно!');
+    }else{
+        alert(c.error);
+    };
+});
 
+money.sendMoneyCallback = data => ApiConnector.transferMoney(data, c => {
+    if (c.success) {
+        ProfileWidget.showProfile(c.data);
+        alert('Перевод валюты выполнен успешно!');
+    }else{
+        alert(c.error);
+    };
+});
 
+const widget = new FavoritesWidget;
 
-
-
+ApiConnector.getFavorites(c => {
+    if (c.success) {
+        console.log(с);
+        widget.clearTable();
+        widget.fillTable(с.data);
+        widget.updateUsersList(с.data)
+    }else{
+        alert(c.error);
+    };
+});
