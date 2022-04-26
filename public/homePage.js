@@ -1,63 +1,100 @@
-const logoutbutton = new LogoutButton;
-logoutbutton.action = logout => ApiConnector.logout(c => {
-    if (c.success) {location.reload();};
+const logoutbutton = new LogoutButton();
+//кнопка выхода
+logoutbutton.action = logout => ApiConnector.logout(response => {
+    if (response.success) {
+        location.reload();
+    };
 });
 
-ApiConnector.current(c => {
-    if (c.success) {ProfileWidget.showProfile(c.data);};
+//виджет профиля пользователя
+ApiConnector.current(currentUser => {
+    if (currentUser.success) {
+        ProfileWidget.showProfile(currentUser.data);
+    };
 });
 
-const board = new RatesBoard;
-
-function getKursValut(b) {
-    ApiConnector.getStocks(c => {
-        if (c.success) {
-            //alert('обновление курса');
-            b.clearTable();
-            b.fillTable(c.data);
+//обновление курсов валют
+const board = new RatesBoard();
+function getNewStocks() {
+    ApiConnector.getStocks(currentRate => {
+        console.log('clear stocks');
+        if (currentRate.success) {
+            board.clearTable();
+            board.fillTable(currentRate.data);
         };
     });
 };
-setInterval(getKursValut(board), 60000);
 
+setInterval(getNewStocks, 60000);
+
+//ОПЕРАЦИИ С ДЕНЬГАМИ
+
+//пополнение баланса
 const money = new MoneyManager;
+let isSuccess = true;
 
-money.addMoneyCallback = data => ApiConnector.addMoney(data, c => {
-    if (c.success) {
-        ProfileWidget.showProfile(c.data);
-        alert('Баланс пополнен успешно!');
-    }else{
-        alert(c.error);
+money.addMoneyCallback = data => ApiConnector.addMoney(data, currentAddMoney => {
+    if (currentAddMoney.success) {
+        ProfileWidget.showProfile(currentAddMoney.data);
+        money.setMessage(isSuccess, 'Баланс пополнен успешно!');
+        //alert('Баланс пополнен успешно!');
+    } else {
+        money.setMessage(isSuccess, currentAddMoney.error);
     };
 });
 
-money.conversionMoneyCallback = data => ApiConnector.convertMoney(data, c => {
-    if (c.success) {
-        ProfileWidget.showProfile(c.data);
-        alert('Конвертация выполнена успешно!');
-    }else{
-        alert(c.error);
+//конвертация денег
+money.conversionMoneyCallback = data => ApiConnector.convertMoney(data, currentConvertMoney => {
+    if (currentConvertMoney.success) {
+        ProfileWidget.showProfile(currentConvertMoney.data);
+        money.setMessage(isSuccess, 'Конвертация выполнена успешно!');
+    } else {
+        money.setMessage(isSuccess, currentConvertMoney.error);
     };
 });
 
-money.sendMoneyCallback = data => ApiConnector.transferMoney(data, c => {
-    if (c.success) {
-        ProfileWidget.showProfile(c.data);
-        alert('Перевод валюты выполнен успешно!');
-    }else{
-        alert(c.error);
+//перевод денег другому пользователю
+money.sendMoneyCallback = data => ApiConnector.transferMoney(data, currentTransferMoney => {
+    if (currentTransferMoney.success) {
+        ProfileWidget.showProfile(currentTransferMoney.data);
+        money.setMessage(isSuccess, 'Перевод денежных средств выполнен успешно!');
+    } else {
+        money.setMessage(isSuccess, currentTransferMoney.error);
     };
 });
 
-const widget = new FavoritesWidget;
+//РАБОТА СО СПИСКОМ ПОЛЬЗОВАТЕЛЕЙ
+//заполнение начального списка
+const favoritesWidget = new FavoritesWidget();
 
-ApiConnector.getFavorites(c => {
-    if (c.success) {
-        console.log(с);
-        widget.clearTable();
-        widget.fillTable(с.data);
-        widget.updateUsersList(с.data)
-    }else{
-        alert(c.error);
+ApiConnector.getFavorites(currentListFavorites => {
+    if (currentListFavorites.success) {
+        favoritesWidget.clearTable();
+        favoritesWidget.fillTable(currentListFavorites.data);
+        money.updateUsersList(currentListFavorites.data);
+    };
+});
+
+//добавление пользователя в список избранных
+favoritesWidget.addUserCallback = data => ApiConnector.addUserToFavorites(data, newFavoriteUser => {
+    if (newFavoriteUser.success) {
+        favoritesWidget.clearTable();
+        favoritesWidget.fillTable(newFavoriteUser.data);
+        money.updateUsersList(newFavoriteUser.data);
+        favoritesWidget.setMessage(isSuccess, 'Пользователь добавлен в адресную книгу успешно!');
+    } else {
+        favoritesWidget.setMessage(isSuccess, newFavoriteUser.error);
+    };
+});
+
+//удаление пользователя из списка избранных
+favoritesWidget.removeUserCallback = data => ApiConnector.removeUserFromFavorites(data, deleteFavoriteUser => {
+    if (deleteFavoriteUser.success) {
+        favoritesWidget.clearTable();
+        favoritesWidget.fillTable(deleteFavoriteUser.data);
+        money.updateUsersList(deleteFavoriteUser.data);
+        favoritesWidget.setMessage(isSuccess, 'Пользователь удален из адресной книги успешно!');
+    } else {
+        favoritesWidget.setMessage(isSuccess, deleteFavoriteUser.error);
     };
 });
